@@ -1,0 +1,12 @@
+{
+  "name": "caip-utils",
+  "version": "0.1.0",
+  "description": "Tools for generating and parsing CAIP identifiers",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test/index.test.js"
+  },
+  "keywords": ["caip", "caip10", "caip19", "utils", "identifiers"],
+  "author": "tristan-bp",
+  "license": "MIT"
+}
