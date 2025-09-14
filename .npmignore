@@ -1,0 +1,14 @@
+# Ignore tests
+test/
+*.test.js
+
+# Ignore config/dev files
+.npmignore
+.gitignore
+*.log
+*.env
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
