@@ -37,7 +37,7 @@ describe('Stellar Tests', () => {
         explorerUrl: 'https://stellar.expert/explorer/public/asset/XLM',
         symbol: 'XLM',
         isNativeToken: true,
-        verified: true
+        verifiedOnChain: true
       });
     });
 
@@ -54,7 +54,7 @@ describe('Stellar Tests', () => {
       expect(result.assetReference).toBe('USDC-GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN');
       expect(result.symbol).toBe('USDC');
       expect(result.isNativeToken).toBe(false);
-      expect(result.verified).toBe(true);
+      expect(result.verifiedOnChain).toBe(true);
       expect(result.explorerUrl).toBeDefined();
     });
 
@@ -65,7 +65,7 @@ describe('Stellar Tests', () => {
 
     test('should throw error for unsupported asset namespace', async () => {
       await expect(validateStellarCAIP19('pubnet', 'unsupported', 'anything'))
-        .rejects.toThrow('Only stellar assets and native token are supported at this time');
+        .rejects.toThrow('Only stellar assets and XLM native token are supported at this time');
     });
 
     test('should throw error for unsupported chainId', async () => {

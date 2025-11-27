@@ -5,9 +5,9 @@ import { parseCAIP221 } from '../src/caip221.js';
 describe('CAIP221 Tests', () => {
 
   test('should throw error for invalid CAIP221 format (wrong structure)', async () => {
-    await expect(parseCAIP221('stellar:pubnet:tx:12345')).rejects.toThrow('Invalid CAIP19 format: must contain exactly one forward slash');
-    await expect(parseCAIP221('stellar/pubnet/tx/12345')).rejects.toThrow('Invalid CAIP19 format: must contain exactly one forward slash');
-    await expect(parseCAIP221('stellar:pubnet')).rejects.toThrow('Invalid CAIP19 format: must contain exactly one forward slash');
+    await expect(parseCAIP221('stellar:pubnet:tx:12345')).rejects.toThrow('Invalid CAIP221 format: must contain exactly one forward slash');
+    await expect(parseCAIP221('stellar/pubnet/tx/12345')).rejects.toThrow('Invalid CAIP221 format: must contain exactly one forward slash');
+    await expect(parseCAIP221('stellar:pubnet')).rejects.toThrow('Invalid CAIP221 format: must contain exactly one forward slash');
   });
 
   test('should throw error for invalid chain format', async () => {

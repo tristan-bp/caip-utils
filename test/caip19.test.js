@@ -81,7 +81,7 @@ describe('CAIP19 Regex Validation Tests', () => {
     expect(result.assetReference).toBe('148');
     expect(result.symbol).toBe('XLM');
     expect(result.isNativeToken).toBe(true);
-    expect(result.verified).toBe(true);
+    expect(result.verifiedOnChain).toBe(true);
     expect(result.explorerUrl).toBe('https://stellar.expert/explorer/public/asset/XLM');
   });
 
@@ -94,7 +94,7 @@ describe('CAIP19 Regex Validation Tests', () => {
     expect(result.assetReference).toBe('USDC-GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN');
     expect(result.symbol).toBe('USDC');
     expect(result.isNativeToken).toBe(false);
-    expect(result.verified).toBe(true);
+    expect(result.verifiedOnChain).toBe(true);
     expect(result.explorerUrl).toBe('https://stellar.expert/explorer/public/asset/USDC-GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN');
   });
 
@@ -107,7 +107,7 @@ describe('CAIP19 Regex Validation Tests', () => {
     expect(result.assetReference).toBe('SHX-GDSTRSHXHGJ7ZIVRBXEYE5Q74XUVCUSEKEBR7UCHEUUEK72N7I7KJ6JH');
     expect(result.symbol).toBe('SHX');
     expect(result.isNativeToken).toBe(false);
-    expect(result.verified).toBe(true);
+    expect(result.verifiedOnChain).toBe(true);
     expect(result.explorerUrl).toBe('https://stellar.expert/explorer/public/asset/SHX-GDSTRSHXHGJ7ZIVRBXEYE5Q74XUVCUSEKEBR7UCHEUUEK72N7I7KJ6JH');
   });
 

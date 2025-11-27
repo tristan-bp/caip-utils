@@ -3,7 +3,7 @@ export function validateStellarCAIP2(reference) {
         return {
             namespace: 'stellar',
             reference: 'pubnet',
-            humaneReadableName: 'Stellar Mainnet'
+            humanReadableName: 'Stellar Mainnet'
         };
     }
     else {
@@ -51,7 +51,7 @@ export async function validateStellarCAIP19(reference, asset_namespace, asset_re
                     explorerUrl: `https://stellar.expert/explorer/public/asset/XLM`,
                     symbol: 'XLM',
                     isNativeToken: true,
-                    verified: true
+                    verifiedOnChain: true
                 };
             }
             else {
@@ -72,14 +72,14 @@ export async function validateStellarCAIP19(reference, asset_namespace, asset_re
                     explorerUrl: `https://stellar.expert/explorer/public/asset/${asset_reference}`, // fails for native tokens
                     symbol: assetInfo.asset_code,
                     isNativeToken: false,
-                    verified: true
+                    verifiedOnChain: true
                 };
             } catch (error) {
                 throw new Error('Cannot fetch asset info');
             }
         }
         else {
-            throw new Error('Only stellar assets and native token are supported at this time');
+            throw new Error('Only stellar assets and XLM native token are supported at this time');
         }
     }
     else {
@@ -105,23 +105,22 @@ export async function fetchStellarTransactionInfo(txHash) {
 
 export async function validateStellarCAIP221(reference, transaction_id) {
     if (reference === "pubnet") {
-            if((await fetchStellarTransactionInfo(transaction_id)).status === 'success'){
-                return {
-                    namespace: 'stellar',
-                    reference: reference,
-                    explorerUrl: `https://stellar.expert/explorer/public/tx/${transaction_id}`,
-                    verified: true
-                };
-            }
-            else{
-                return {
-                    namespace: 'stellar',
-                    reference: reference,
-                    verified: false
-                };
-            }
-    }
-    else {
+        const txInfo = await fetchStellarTransactionInfo(transaction_id);
+        if (txInfo.status === 'success') {
+            return {
+                namespace: 'stellar',
+                reference: reference,
+                verified: true,
+                explorerUrl: `https://stellar.expert/explorer/public/tx/${transaction_id}`
+            };
+        } else {
+            return {
+                namespace: 'stellar',
+                reference: reference,
+                verified: false
+            };
+        }
+    } else {
         throw new Error('Unsupported Stellar reference');
     }
 }

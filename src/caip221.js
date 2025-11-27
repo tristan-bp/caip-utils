@@ -14,11 +14,10 @@ doesn't include optional block prefix
 export async function parseCAIP221(caip221) {
     const parts = caip221.split('/');
     if (parts.length !== 2) {
-        throw new Error('Invalid CAIP19 format: must contain exactly one forward slash');
+        throw new Error('Invalid CAIP221 format: must contain exactly one forward slash');
     }
 
     const [prefix, transactionId] = parts;
-
 
     const chainParts = prefix.split(':');
     if (chainParts.length !== 3) {

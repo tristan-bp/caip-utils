@@ -11,7 +11,7 @@ describe('CAIP2 Tests', () => {
     expect(parsed).toEqual({
       namespace: 'stellar',
       reference: 'pubnet',
-      humaneReadableName: 'Stellar Mainnet'
+      humanReadableName: 'Stellar Mainnet'
     });
   });
 
