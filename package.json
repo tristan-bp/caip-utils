@@ -6,7 +6,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "prepublishOnly": "npm test"
+    "prepublishOnly": "npm test",
+    "update-chains": "node scripts/update-chains-snapshot.js"
   },
   "keywords": [
     "caip",

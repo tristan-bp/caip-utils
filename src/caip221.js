@@ -1,5 +1,6 @@
 // src/caip221.js
-import { validateStellarCAIP221 } from './namespaces/stellar.js';
+import { parseStellarCAIP221, verifyStellarCAIP221 } from './namespaces/stellar/stellar.js';
+import { parseEIP155CAIP221, verifyEIP155CAIP221 } from './namespaces/eip155/eip155.js';
 
 
 /*
@@ -20,19 +21,53 @@ export async function parseCAIP221(caip221) {
     const [prefix, transactionId] = parts;
 
     const chainParts = prefix.split(':');
-    if (chainParts.length !== 3) {
-        throw new Error('Invalid CAIP221 chain format: namespace:reference:tx');
+    if (chainParts.length !== 3 && chainParts.length !== 4) {
+        throw new Error('Invalid CAIP221 format: namespace:reference:txn/transaction_id or namespace:reference:block:txn/transaction_id');
     }
 
-    const [namespace, reference, ] = chainParts;
+    const [namespace, reference] = chainParts;
 
     if (namespace === "stellar") {
-        return await validateStellarCAIP221(reference, transactionId );
+        return parseStellarCAIP221(reference, transactionId);
+    }
+    if (namespace === 'eip155') {
+        return await parseEIP155CAIP221(reference, transactionId);
     }
 
     return {
         namespace: namespace,
         reference: reference,
         transactionId: transactionId,
+        chainName: `${namespace.charAt(0).toUpperCase() + namespace.slice(1)} ${reference}`,
+        explorerUrl: undefined,
+        verified: false
+    };
+}
+
+export async function verifyCAIP221(caip221) {
+    const parsedData = await parseCAIP221(caip221);
+    
+    if (parsedData.namespace === 'stellar') {
+        // For Stellar, we could verify the transaction exists on-chain via Horizon API
+        // TODO: Implement actual verification using fetchStellarTransactionInfo
+        return {
+            ...parsedData,
+            verified: false,
+            verificationNote: "Stellar transaction verification not yet implemented - would require Horizon API call"
+        };
+    } else if (parsedData.namespace === 'eip155') {
+        // For EIP155, we could verify the transaction exists on-chain via RPC
+        // TODO: Implement actual verification using RPC eth_getTransactionByHash
+        return {
+            ...parsedData,
+            verified: false,
+            verificationNote: "EIP155 transaction verification not yet implemented - would require RPC call"
+        };
+    }
+    
+    return {
+        ...parsedData,
+        verified: false,
+        verificationNote: `Transaction verification not supported for namespace: ${parsedData.namespace}`
     };
 }

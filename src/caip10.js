@@ -1,7 +1,8 @@
 // src/caip10.js
-import { validateStellarCAIP10 } from './namespaces/stellar.js';
+import { parseStellarCAIP10 } from './namespaces/stellar/stellar.js';
+import { parseEIP155CAIP10 } from './namespaces/eip155/eip155.js';
 
-export function parseCAIP10(value) {
+export async function parseCAIP10(value) {
     const parts = value.split(':');
     let namespace, reference, address;
     
@@ -30,11 +31,16 @@ export function parseCAIP10(value) {
     }
     
     if (namespace === 'stellar') {
-        return validateStellarCAIP10(reference, address);
+        return parseStellarCAIP10(reference, address);
     }   
+    if (namespace === 'eip155') {
+        return await parseEIP155CAIP10(reference, address);
+    }
     return {
         namespace: namespace,
         reference: reference,
         address: address,
+        chainName: `${namespace.charAt(0).toUpperCase() + namespace.slice(1)} ${reference}`,
+        explorerUrl: undefined
     }; 
 }

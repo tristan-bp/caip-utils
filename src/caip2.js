@@ -1,7 +1,8 @@
 // src/caip2.js
-import { validateStellarCAIP2 } from './namespaces/stellar.js';
+import { parseStellarCAIP2 } from './namespaces/stellar/stellar.js';
+import { parseEIP155CAIP2 } from './namespaces/eip155/eip155.js';
 
-export function parseCAIP2(caip2) {
+export async function parseCAIP2(caip2) {
     const parts = caip2.split(':');
     let namespace, reference;
     
@@ -24,15 +25,16 @@ export function parseCAIP2(caip2) {
     }
     
     if (namespace === 'stellar') {
-        return validateStellarCAIP2(reference);
+        return parseStellarCAIP2(reference);
     }
-    
+    if (namespace === 'eip155') {
+        return await parseEIP155CAIP2(reference);
+    }
+
     return {
         namespace: namespace,
         reference: reference,
+        chainName: `${namespace.charAt(0).toUpperCase() + namespace.slice(1)} ${reference}`,
+        explorerUrl: undefined
     };
-}
-
-export function generateCAIP2(chain) {
-  // TODO: CAIP2 generation logic
 }
