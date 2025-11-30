@@ -36,12 +36,14 @@ export function parseStellarCAIP10(reference, address) {
 }
 
 export async function parseStellarCAIP19(reference, assetNamespace, assetReference) {
+    chainData = parseStellarCAIP2(reference);
     if (reference === "pubnet") {
         if (assetNamespace === "slip44") {
             if (assetReference === "148") {
                 return {
                     namespace: 'stellar',
                     reference: reference,
+                    chainName: chainData.chainName,
                     assetNamespace: assetNamespace,
                     assetReference: assetReference,
                     explorerUrl: `https://stellar.expert/explorer/public/asset/XLM`,
@@ -57,6 +59,7 @@ export async function parseStellarCAIP19(reference, assetNamespace, assetReferen
             return {
                 namespace: 'stellar',
                 reference: reference,
+                chainName: chainData.chainName,
                 assetNamespace: assetNamespace,
                 assetReference: assetReference,
                 explorerUrl: `https://stellar.expert/explorer/public/asset/${assetReference}`,

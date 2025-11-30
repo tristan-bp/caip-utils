@@ -61,8 +61,8 @@ export async function getChainData(forceRefresh = false) {
   const freshData = await fetchChainlistData();
   
   if (freshData) {
-    // Merge with static chains (static chains take precedence for reliability)
-    chainlistCache = { ...freshData, ...STATIC_CHAINS };
+    // Let fresh data override static chains for better RPC availability
+    chainlistCache = freshData;
     cacheTimestamp = now;
     return chainlistCache;
   }
@@ -308,31 +308,6 @@ export async function parseEIP155CAIP221(reference, transactionId, options = {})
 }
 
 /**
- * Validate EIP155 CAIP-221 identifier (transaction) - alias for parseEIP155CAIP221
- * @param {string} reference - The chain ID
- * @param {string} transactionId - The transaction hash
- * @param {Object} options - Options for chain data fetching
- * @returns {Promise<Object>} Rich transaction data object
- */
-export async function validateEIP155CAIP221(reference, transactionId, options = {}) {
-  const chainData = await validateEIP155CAIP2(reference, options);
-  
-  // Basic transaction hash validation (0x prefix, 64 hex chars)
-  if (!/^0x[a-fA-F0-9]{64}$/.test(transactionId)) {
-    throw new Error('Invalid EIP155 transaction hash format: must be 0x followed by 64 hex characters');
-  }
-  
-  return {
-    ...chainData,
-    transactionId: transactionId,
-    explorerUrl: chainData.explorerUrl ? `${chainData.explorerUrl}/tx/${transactionId}` : undefined,
-    // Note: We don't verify transaction existence like Stellar does
-    // as it would require RPC calls to each chain
-    verified: false
-  };
-}
-
-/**
  * Verify EIP155 CAIP-221 identifier (transaction) with on-chain verification
  * @param {string} reference - The chain ID
  * @param {string} transactionId - The transaction hash
@@ -383,8 +358,8 @@ export async function updateChainsSnapshot() {
     throw new Error('Failed to fetch fresh chain data');
   }
   
-  // Update cache with all chains + static fallbacks
-  chainlistCache = { ...freshData, ...STATIC_CHAINS };
+  // Update cache 
+  chainlistCache = freshData;
   cacheTimestamp = Date.now();
   
   return chainlistCache;
@@ -409,9 +384,13 @@ export async function fetchTokenInfoWithFallback(chainId, contractAddress, optio
   // Get RPC URLs from chain data
   let rpcUrls = chain.rpc || [];
   
-  // Filter to only HTTP/HTTPS URLs (no WebSocket)
-  rpcUrls = rpcUrls.filter(url => 
-    typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))
+  // Extract URLs from RPC objects and filter for HTTP/HTTPS
+  rpcUrls = rpcUrls
+    .map(rpc => rpc?.url)
+    .filter(url => 
+    url && 
+    typeof url === 'string' && 
+    (url.startsWith('http://') || url.startsWith('https://'))
   );
   
   if (rpcUrls.length === 0) {
@@ -481,8 +460,12 @@ export async function fetchTransactionInfoWithFallback(chainId, transactionHash,
   let rpcUrls = chain.rpc || [];
   
   // Filter to only HTTP/HTTPS URLs (no WebSocket)
-  rpcUrls = rpcUrls.filter(url => 
-    typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))
+  rpcUrls = rpcUrls
+    .map(rpc => rpc?.url)
+    .filter(url => 
+    url && 
+    typeof url === 'string' && 
+    (url.startsWith('http://') || url.startsWith('https://'))
   );
   
   if (rpcUrls.length === 0) {

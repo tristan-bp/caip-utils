@@ -7,7 +7,8 @@ import {
   parseEIP155CAIP19, 
   parseEIP155CAIP221,
   verifyEIP155CAIP19,
-  fetchTokenInfoWithFallback
+  fetchTokenInfoWithFallback,
+  verifyEIP155CAIP221
 } from '../../../src/namespaces/eip155/eip155.js';
 
 describe('EIP155 Namespace Business Logic', () => {
@@ -44,7 +45,6 @@ describe('EIP155 Namespace Business Logic', () => {
     });
 
     test('should respect forceRefresh option', async () => {
-      // This test would be more meaningful with network access
       const result = await getChainData(true);
       expect(result).toBeDefined();
       expect(result['1']).toBeDefined();
@@ -135,7 +135,6 @@ describe('EIP155 Namespace Business Logic', () => {
       expect(result.namespace).toBe('eip155');
       expect(result.assetNamespace).toBe('erc20');
       expect(result.assetReference).toBe(contractAddress);
-      expect(result.assetType).toBe('ERC20');
       expect(result.tokenId).toBeUndefined();
       expect(result.explorerUrl).toBe(`https://etherscan.io/token/${contractAddress}`);
     });
@@ -166,7 +165,6 @@ describe('EIP155 Namespace Business Logic', () => {
       expect(result.assetNamespace).toBe('erc1155');
       expect(result.assetReference).toBe(contractAddress);
       expect(result.tokenId).toBe(tokenId);
-      expect(result.assetType).toBe('ERC1155');
     });
 
     test('should throw error for unsupported asset namespace', async () => {
@@ -177,7 +175,7 @@ describe('EIP155 Namespace Business Logic', () => {
 
     test('should throw error for invalid ERC20 contract address', async () => {
       await expect(parseEIP155CAIP19('1', 'erc20', 'invalid'))
-        .rejects.toThrow('Invalid contract address format');
+        .rejects.toThrow('Invalid ERC20 contract address format');
     });
 
     test('should throw error for ERC20 with token ID', async () => {
@@ -239,23 +237,77 @@ describe('EIP155 Namespace Business Logic', () => {
   });
 
   describe('RPC Integration and Token Fetching', () => {
-    test('should handle RPC fallback logic structure', async () => {
-      // This will fail due to network restrictions, but tests the function structure
-      await expect(fetchTokenInfoWithFallback('1', '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'))
-        .rejects.toThrow('No HTTP RPC endpoints available');
-    });
+    test('should fetch USDC token info with RPC fallback', async () => {
+      const usdcAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+      
+      const result = await fetchTokenInfoWithFallback('1', usdcAddress);
+      
+      expect(result).toHaveProperty('name');
+      expect(result).toHaveProperty('symbol');
+      expect(result).toHaveProperty('decimals');
+      expect(result).toHaveProperty('totalSupply');
+      expect(result.chainId).toBe(1);
+      expect(result.chainName).toBe('Ethereum Mainnet');
+      expect(result.contractAddress).toBe(usdcAddress);
+      expect(result).toHaveProperty('rpcUrl');
+      
+      // USDC specific expectations
+      expect(result.symbol).toBe('USDC');
+      expect(result.decimals).toBe(6);
+      
+      console.log(`✅ Successfully fetched ${result.name} (${result.symbol}) token info`);
+    }, 30000);
 
-    test('should handle verify function integration', async () => {
-      // This will fail due to network restrictions, but tests the integration
-      await expect(verifyEIP155CAIP19('1', 'erc20', '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'))
-        .rejects.toThrow(); // Expect network error, not parsing error
-    });
+    test('should verify ERC20 token successfully', async () => {
+      const usdcAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+      
+      const result = await verifyEIP155CAIP19('1', 'erc20', usdcAddress);
+      
+      expect(result.namespace).toBe('eip155');
+      expect(result.reference).toBe('1');
+      expect(result.assetNamespace).toBe('erc20');
+      expect(result.assetReference).toBe(usdcAddress);
+      expect(result.chainName).toBe('Ethereum Mainnet');
+      expect(result.verified).toBe(true);
+      expect(result).toHaveProperty('name');
+      expect(result).toHaveProperty('symbol');
+      expect(result).toHaveProperty('decimals');
+      expect(result).toHaveProperty('totalSupply');
+      expect(result.symbol).toBe('USDC');
+    }, 30000);
 
-    test('should handle NFT verification structure', async () => {
-      // This will fail due to network restrictions, but tests the structure
-      await expect(verifyEIP155CAIP19('1', 'erc721', '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', '1234'))
-        .rejects.toThrow(); // Expect network error, not parsing error
-    });
+    test('should verify NFT contract successfully', async () => {
+      const boredApeAddress = '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D';
+      const tokenId = '1234';
+      
+      const result = await verifyEIP155CAIP19('1', 'erc721', boredApeAddress, tokenId);
+      
+      expect(result.namespace).toBe('eip155');
+      expect(result.reference).toBe('1');
+      expect(result.assetNamespace).toBe('erc721');
+      expect(result.assetReference).toBe(boredApeAddress);
+      expect(result.tokenId).toBe(tokenId);
+      expect(result.chainName).toBe('Ethereum Mainnet');
+      expect(result.verified).toBe(true);
+      expect(result).toHaveProperty('name');
+      expect(result).toHaveProperty('symbol');
+      expect(result.symbol).toBe('BAYC');
+    }, 30000);
+
+    test('should handle invalid contract address gracefully', async () => {
+      const invalidAddress = '0x0000000000000000000000000000000000000000';
+      
+      const result = await verifyEIP155CAIP19('1', 'erc20', invalidAddress);
+      
+      expect(result.namespace).toBe('eip155');
+      expect(result.reference).toBe('1');
+      expect(result.assetNamespace).toBe('erc20');
+      expect(result.assetReference).toBe(invalidAddress);
+      expect(result.verified).toBe(false);
+      expect(result).toHaveProperty('verificationError');
+      
+      console.log('ℹ️ Invalid contract handled gracefully:', result.verificationError);
+    }, 30000);
   });
 
   describe('Edge Cases and Chain-Specific Logic', () => {

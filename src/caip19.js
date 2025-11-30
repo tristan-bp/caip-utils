@@ -86,6 +86,8 @@ export async function parseCAIP19(caip19) {
     }; 
 }
 
+console.log(parseCAIP19('unknown:test/asset:reference'));
+
 // Parse + on-chain verification
 // Internally calls parseCAIP19, then adds RPC data
 export async function verifyCAIP19(caip19) {

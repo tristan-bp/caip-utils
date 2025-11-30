@@ -27,6 +27,24 @@ export async function parseCAIP221(caip221) {
 
     const [namespace, reference] = chainParts;
 
+    // Validate namespace format: [-a-z0-9]{3,8}
+    const namespaceRegex = /^[-a-z0-9]{3,8}$/;
+    if (!namespaceRegex.test(namespace)) {
+        throw new Error(`Invalid CAIP221 namespace format: "${namespace}" must match [-a-z0-9]{3,8}`);
+    }
+
+    // Validate reference format: [-_a-zA-Z0-9]{1,32}
+    const referenceRegex = /^[-_a-zA-Z0-9]{1,32}$/;
+    if (!referenceRegex.test(reference)) {
+        throw new Error(`Invalid CAIP221 reference format: "${reference}" must match [-_a-zA-Z0-9]{1,32}`);
+    }
+
+    // Validate transaction_id format: [-%a-zA-Z0-9]{1,128}
+    const transactionIdRegex = /^[-%a-zA-Z0-9]{1,128}$/;
+    if (!transactionIdRegex.test(transactionId)) {
+        throw new Error(`Invalid CAIP221 transaction_id format: "${transactionId}" must match [-%a-zA-Z0-9]{1,128}`);
+    }
+
     if (namespace === "stellar") {
         return parseStellarCAIP221(reference, transactionId);
     }
@@ -48,13 +66,7 @@ export async function verifyCAIP221(caip221) {
     const parsedData = await parseCAIP221(caip221);
     
     if (parsedData.namespace === 'stellar') {
-        // For Stellar, we could verify the transaction exists on-chain via Horizon API
-        // TODO: Implement actual verification using fetchStellarTransactionInfo
-        return {
-            ...parsedData,
-            verified: false,
-            verificationNote: "Stellar transaction verification not yet implemented - would require Horizon API call"
-        };
+        return await verifyStellarCAIP221(parsedData.reference, parsedData.transactionId);
     } else if (parsedData.namespace === 'eip155') {
         // For EIP155, verify the transaction exists on-chain via RPC
         return await verifyEIP155CAIP221(parsedData.reference, parsedData.transactionId);
