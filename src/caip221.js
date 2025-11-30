@@ -56,13 +56,8 @@ export async function verifyCAIP221(caip221) {
             verificationNote: "Stellar transaction verification not yet implemented - would require Horizon API call"
         };
     } else if (parsedData.namespace === 'eip155') {
-        // For EIP155, we could verify the transaction exists on-chain via RPC
-        // TODO: Implement actual verification using RPC eth_getTransactionByHash
-        return {
-            ...parsedData,
-            verified: false,
-            verificationNote: "EIP155 transaction verification not yet implemented - would require RPC call"
-        };
+        // For EIP155, verify the transaction exists on-chain via RPC
+        return await verifyEIP155CAIP221(parsedData.reference, parsedData.transactionId);
     }
     
     return {

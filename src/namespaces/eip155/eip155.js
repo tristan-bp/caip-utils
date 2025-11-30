@@ -1,6 +1,6 @@
 // src/namespaces/eip155/eip155.js
 import STATIC_CHAINS from './chains-snapshot.json' with { type: 'json' };
-import { fetchERC20TokenInfo } from './rpc.js';
+import { fetchERC20TokenInfo, fetchEIP155Transaction } from './rpc.js';
 
 // Cache management
 let chainlistCache = null;
@@ -298,7 +298,9 @@ export async function parseEIP155CAIP221(reference, transactionId, options = {})
   }
   
   return {
-    ...chainData,
+    namespace: 'eip155',
+    reference: reference,
+    chainName: chainData.chainName,
     transactionId: transactionId,
     explorerUrl: chainData.explorerUrl ? `${chainData.explorerUrl}/tx/${transactionId}` : undefined,
     verified: false
@@ -328,6 +330,46 @@ export async function validateEIP155CAIP221(reference, transactionId, options = 
     // as it would require RPC calls to each chain
     verified: false
   };
+}
+
+/**
+ * Verify EIP155 CAIP-221 identifier (transaction) with on-chain verification
+ * @param {string} reference - The chain ID
+ * @param {string} transactionId - The transaction hash
+ * @param {Object} options - Options for chain data fetching
+ * @returns {Promise<Object>} Rich transaction data object with verification
+ */
+export async function verifyEIP155CAIP221(reference, transactionId, options = {}) {
+  const parsedData = await parseEIP155CAIP221(reference, transactionId, options);
+  
+  try {
+    // Use the fallback function to get transaction info with RPC resilience
+    const txInfo = await fetchTransactionInfoWithFallback(reference, transactionId, options);
+    
+    // Transaction found and verified
+    return {
+      ...parsedData,
+      verified: true,
+      blockNumber: txInfo.blockNumber,
+      blockHash: txInfo.blockHash,
+      from: txInfo.from,
+      to: txInfo.to,
+      value: txInfo.value.toString(),
+      gas: txInfo.gas,
+      gasPrice: txInfo.gasPrice ? txInfo.gasPrice.toString() : null,
+      isConfirmed: txInfo.isConfirmed,
+      isPending: txInfo.isPending,
+      rpcUrl: txInfo.rpcUrl // Include which RPC was successful
+    };
+    
+  } catch (error) {
+    // Return unverified with error details
+    return {
+      ...parsedData,
+      verified: false,
+      verificationError: error.message
+    };
+  }
 }
 
 /**
@@ -415,6 +457,81 @@ export async function fetchTokenInfoWithFallback(chainId, contractAddress, optio
   // If we get here, all RPC attempts failed
   throw new Error(
     `Failed to fetch token info after ${attemptsToTry.length} RPC attempts. ` +
+    `Last error: ${lastError?.message || 'Unknown error'}`
+  );
+}
+
+/**
+ * Fetch EIP155 transaction information with RPC fallback resilience
+ * @param {string} chainId - The EIP155 chain ID (e.g., "1", "137")
+ * @param {string} transactionHash - The transaction hash
+ * @param {Object} options - Options for chain data fetching and RPC behavior
+ * @returns {Promise<Object>} Transaction information (hash, blockNumber, from, to, etc.)
+ */
+export async function fetchTransactionInfoWithFallback(chainId, transactionHash, options = {}) {
+  // Get chain data to find RPC URLs
+  const chains = await getChainData(options.forceRefresh);
+  const chain = chains[chainId];
+  
+  if (!chain) {
+    throw new Error(`Unsupported EIP155 chain ID: ${chainId}`);
+  }
+  
+  // Get RPC URLs from chain data
+  let rpcUrls = chain.rpc || [];
+  
+  // Filter to only HTTP/HTTPS URLs (no WebSocket)
+  rpcUrls = rpcUrls.filter(url => 
+    typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))
+  );
+  
+  if (rpcUrls.length === 0) {
+    throw new Error(`No HTTP RPC endpoints available for chain ${chainId}`);
+  }
+  
+  // Limit to first 3 RPC URLs for fallback attempts
+  const maxAttempts = Math.min(3, rpcUrls.length);
+  const attemptsToTry = rpcUrls.slice(0, maxAttempts);
+  
+  let lastError;
+  
+  // Try each RPC URL until one succeeds
+  for (let i = 0; i < attemptsToTry.length; i++) {
+    const rpcUrl = attemptsToTry[i];
+    
+    try {
+      console.log(`Attempting to fetch transaction info from RPC ${i + 1}/${attemptsToTry.length}: ${rpcUrl}`);
+      
+      const txInfo = await fetchEIP155Transaction(transactionHash, rpcUrl);
+      
+      // Add chain context to the response
+      return {
+        ...txInfo,
+        chainId: chain.chainId,
+        chainName: chain.name,
+        rpcUrl // Include which RPC was successful
+      };
+      
+    } catch (error) {
+      lastError = error;
+      console.warn(`RPC attempt ${i + 1} failed for ${rpcUrl}:`, error.message);
+      
+      // If transaction not found, that's definitive - don't try other RPCs
+      if (error.message.includes('Transaction not found')) {
+        throw new Error('Transaction not found on blockchain');
+      }
+      
+      // If this isn't the last attempt, continue to next RPC
+      if (i < attemptsToTry.length - 1) {
+        console.log(`Trying next RPC endpoint...`);
+        continue;
+      }
+    }
+  }
+  
+  // If we get here, all RPC attempts failed
+  throw new Error(
+    `Failed to fetch transaction info after ${attemptsToTry.length} RPC attempts. ` +
     `Last error: ${lastError?.message || 'Unknown error'}`
   );
 }

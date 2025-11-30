@@ -1,5 +1,5 @@
 /**
- * EIP155/Ethereum RPC utilities for fetching token information
+ * EIP155/Ethereum RPC utilities for fetching token and transaction information
  */
 
 /**
@@ -54,6 +54,63 @@ export async function fetchERC20TokenInfo(contractAddress, rpcUrl) {
     symbol: decodeString(resultMap[2].result),
     decimals: parseInt(resultMap[3].result, 16),
     totalSupply: BigInt(resultMap[4].result)
+  };
+}
+
+/**
+ * Fetch EIP155 transaction information from RPC node
+ * @param {string} transactionHash - The transaction hash (0x prefixed)
+ * @param {string} rpcUrl - The RPC endpoint URL
+ * @returns {Promise<Object>} Transaction information
+ */
+export async function fetchEIP155Transaction(transactionHash, rpcUrl) {
+  const response = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'eth_getTransactionByHash',
+      params: [transactionHash],
+      id: 1
+    })
+  });
+  
+  if (!response.ok) {
+    throw new Error(`RPC request failed: ${response.status} ${response.statusText}`);
+  }
+  
+  const result = await response.json();
+  
+  if (result.error) {
+    throw new Error(`RPC error: ${result.error.message}`);
+  }
+  
+  if (!result.result) {
+    throw new Error('Transaction not found');
+  }
+  
+  const tx = result.result;
+  
+  return {
+    hash: tx.hash,
+    blockNumber: tx.blockNumber ? parseInt(tx.blockNumber, 16) : null,
+    blockHash: tx.blockHash,
+    transactionIndex: tx.transactionIndex ? parseInt(tx.transactionIndex, 16) : null,
+    from: tx.from,
+    to: tx.to,
+    value: tx.value ? BigInt(tx.value) : BigInt(0),
+    gas: tx.gas ? parseInt(tx.gas, 16) : null,
+    gasPrice: tx.gasPrice ? BigInt(tx.gasPrice) : null,
+    maxFeePerGas: tx.maxFeePerGas ? BigInt(tx.maxFeePerGas) : null,
+    maxPriorityFeePerGas: tx.maxPriorityFeePerGas ? BigInt(tx.maxPriorityFeePerGas) : null,
+    nonce: tx.nonce ? parseInt(tx.nonce, 16) : null,
+    input: tx.input,
+    type: tx.type ? parseInt(tx.type, 16) : 0,
+    // Status info (requires transaction receipt for confirmation status)
+    isPending: tx.blockNumber === null,
+    isConfirmed: tx.blockNumber !== null
   };
 }
 

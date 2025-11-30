@@ -130,28 +130,37 @@ export function parseStellarCAIP221(reference, transactionId) {
     const chainData = parseStellarCAIP2(reference);
 
     return {
-        ...chainData,
+        namespace: 'stellar',
+        reference: reference,
+        chainName: chainData.chainName,
         transactionId: transactionId,
         explorerUrl: `${chainData.explorerUrl}/tx/${transactionId}`,
         verified: false
     };
 }
 
-export async function validateStellarCAIP221(reference, transaction_id) {
+export async function verifyStellarCAIP221(reference, transaction_id) {
+    const chainData = parseStellarCAIP2(reference);
     if (reference === "pubnet") {
         const txInfo = await fetchStellarTransactionInfo(transaction_id);
         if (txInfo.status === 'success') {
             return {
                 namespace: 'stellar',
                 reference: reference,
+                chainName: chainData.chainName,
+                transactionId: transaction_id,
                 verified: true,
-                explorerUrl: `https://stellar.expert/explorer/public/tx/${transaction_id}`
+                explorerUrl: `${chainData.explorerUrl}/tx/${transaction_id}`
             };
         } else {
             return {
                 namespace: 'stellar',
                 reference: reference,
-                verified: false
+                chainName: chainData.chainName,
+                transactionId: transaction_id,
+                explorerUrl: `${chainData.explorerUrl}/tx/${transaction_id}`,
+                verified: false,
+                verificationError: 'Transaction not found on Stellar network'
             };
         }
     } else {
