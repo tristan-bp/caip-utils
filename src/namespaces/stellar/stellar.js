@@ -36,7 +36,7 @@ export function parseStellarCAIP10(reference, address) {
 }
 
 export async function parseStellarCAIP19(reference, assetNamespace, assetReference) {
-    chainData = parseStellarCAIP2(reference);
+    const chainData = parseStellarCAIP2(reference);
     if (reference === "pubnet") {
         if (assetNamespace === "slip44") {
             if (assetReference === "148") {
