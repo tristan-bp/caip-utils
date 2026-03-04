@@ -141,7 +141,7 @@ export async function parseEIP155CAIP19(reference, asset_namespace, asset_refere
   const chainData = await parseEIP155CAIP2(reference, options);
   
   // Validate asset namespace
-  const validAssetNamespaces = ['slip44', 'erc20', 'erc721', 'erc1155'];
+  const validAssetNamespaces = ['slip44', 'erc20', 'bep20', 'erc721', 'erc1155'];
   if (!validAssetNamespaces.includes(asset_namespace)) {
     throw new Error(`Unsupported EIP155 asset namespace: ${asset_namespace}. Supported: ${validAssetNamespaces.join(', ')}`);
   }
@@ -231,7 +231,7 @@ export async function verifyEIP155CAIP19(reference, asset_namespace, asset_refer
   
   const parsedData = await parseEIP155CAIP19(reference, asset_namespace, asset_reference, tokenId, options);
   
-  if (asset_namespace === 'erc20') {
+  if (asset_namespace === 'erc20' || asset_namespace === 'bep20') {
     // For ERC20, fetch token info using the contract address
     try {
       const tokenInfo = await fetchTokenInfoWithFallback(reference, asset_reference, options);
