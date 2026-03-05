@@ -127,5 +127,6 @@ function decodeString(hex) {
   const lengthHex = cleanHex.slice(64, 128);
   const length = parseInt(lengthHex, 16) * 2; // length in hex chars
   const stringHex = cleanHex.slice(128, 128 + length);
-  return Buffer.from(stringHex, 'hex').toString('utf8');
+  const bytes = new Uint8Array(stringHex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+  return new TextDecoder('utf-8').decode(bytes);
 }
